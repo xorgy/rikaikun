@@ -47,15 +47,15 @@ chrome.runtime.onMessage.addListener(
 				console.log(request);
 		}
 	});
-	
-if(initStorage("v0.8.9", true)) {
+
+if(initStorage("v0.8.10", true)) {
 	// v0.7
 	initStorage("popupcolor", "blue");
 	initStorage("highlight", true);
-	
+
 	// v0.8
 	// No changes to options
-	
+
 	// V0.8.5
 	initStorage("textboxhl", false);
 
@@ -81,20 +81,23 @@ if(initStorage("v0.8.9", true)) {
 	initStorage("disablekeys", "false");
 	initStorage("kanjicomponents", "true");
 
+	// V0.8.10
+  	initStorage("title", "true");
+
 	for (i = 0; i*2 < rcxDict.prototype.numList.length; i++) {
-		initStorage(rcxDict.prototype.numList[i*2], "true")
+		initStorage(rcxDict.prototype.numList[i*2], "true");
 	}
 }
 
-/** 
-* Initializes the localStorage for the given key. 
-* If the given key is already initialized, nothing happens. 
-* 
+/**
+* Initializes the localStorage for the given key.
+* If the given key is already initialized, nothing happens.
+*
 * @author Teo (GD API Guru)
-* @param key The key for which to initialize 
-* @param initialValue Initial value of localStorage on the given key 
-* @return true if a value is assigned or false if nothing happens 
-*/ 
+* @param key The key for which to initialize
+* @param initialValue Initial value of localStorage on the given key
+* @return true if a value is assigned or false if nothing happens
+*/
 function initStorage(key, initialValue) {
   var currentValue = localStorage[key];
   if (!currentValue) {
@@ -113,10 +116,10 @@ rcxMain.config.copySeparator = localStorage["copySeparator"];
 rcxMain.config.maxClipCopyEntries = localStorage["maxClipCopyEntries"];
 rcxMain.config.lineEnding = localStorage["lineEnding"];
 rcxMain.config.minihelp = localStorage["minihelp"];
+rcxMain.config.title = localStorage["title"];
 rcxMain.config.disablekeys = localStorage["disablekeys"];
 rcxMain.config.kanjicomponents = localStorage["kanjicomponents"];
 rcxMain.config.kanjiinfo = new Array(rcxDict.prototype.numList.length/2);
 for (i = 0; i*2 < rcxDict.prototype.numList.length; i++) {
 	rcxMain.config.kanjiinfo[i] = localStorage[rcxDict.prototype.numList[i*2]];
 }
-
