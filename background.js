@@ -3,14 +3,14 @@ chrome.browserAction.onClicked.addListener(rcxMain.inlineToggle);
 chrome.tabs.onSelectionChanged.addListener(rcxMain.onTabSelect);
 chrome.runtime.onMessage.addListener(
 	function(request, sender, response) {
+		var e;
 		switch(request.type) {
 			case 'enable?':
 				console.log('enable?');
 				rcxMain.onTabSelect(sender.tab.id);
 				break;
 			case 'xsearch':
-				console.log('xsearch');
-				var e = rcxMain.search(request.text, request.dictOption);
+				e = rcxMain.search(request.text, request.dictOption);
 				response(e);
 				break;
 /*			case 'nextDict':
@@ -22,12 +22,10 @@ chrome.runtime.onMessage.addListener(
 				rcxMain.resetDict();
 				break;
 			case 'translate':
-				console.log('translate');
-				var e = rcxMain.dict.translate(request.title);
+				e = rcxMain.dict.translate(request.title);
 				response(e);
 				break;
 			case 'makehtml':
-				console.log('makehtml');
 				var html = rcxMain.dict.makeHtml(request.entry);
 				response(html);
 				break;

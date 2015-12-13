@@ -3,7 +3,7 @@
 	Rikaikun
 	Copyright (C) 2010 Erek Speed
 	http://code.google.com/p/rikaikun/
-	
+
 	---
 
 	Originally based on Rikaichan 1.07
@@ -106,7 +106,7 @@ rcxDict.prototype = {
 		this.wordDict = this.fileRead(chrome.extension.getURL("data/dict.dat"));
 		this.wordIndex = this.fileRead(chrome.extension.getURL("data/dict.idx"));
 		this.kanjiData = this.fileRead(chrome.extension.getURL("data/kanji.dat"), 'UTF-8');
-		this.radData = this.fileReadArray(chrome.extension.getURL("data/radicals.dat"), 'UTF-8'); 
+		this.radData = this.fileReadArray(chrome.extension.getURL("data/radicals.dat"), 'UTF-8');
 
 		//	this.test_kanji();
 	},
@@ -236,7 +236,6 @@ if (0) {
 		o.word = word;
 		o.type = 0xFF;
 		o.reason = '';
-		//o.debug = 'root';
 		r.push(o);
 		have[word] = 0;
 
@@ -262,8 +261,6 @@ if (0) {
 								o = r[have[newWord]];
 								o.type |= (rule.type >> 8);
 
-								//o.reason += ' / ' + r[i].reason + ' ' + this.difReasons[rule.reason];
-								//o.debug += ' @ ' + rule.debug;
 								continue;
 							}
 							have[newWord] = r.length;
@@ -271,7 +268,6 @@ if (0) {
 								else o.reason = this.difReasons[rule.reason];
 							o.type = rule.type >> 8;
 							o.word = newWord;
-							//o.debug = r[i].debug + ' $ ' + rule.debug;
 							r.push(o);
 						}
 					}
@@ -348,24 +344,21 @@ if (0) {
 		var index;
 		var maxTrim;
 		var cache = [];
-        var have = [];
-        var count = 0;
-        var maxLen = 0;
+		var have = [];
+		var count = 0;
+		var maxLen = 0;
 
 		if (doNames) {
-			// check: split this
-
 			this.loadNames();
 			dict = this.nameDict;
 			index = this.nameIndex;
-			maxTrim = 20;//this.config.namax;
+			maxTrim = 20; //this.config.namax;
 			entry.names = 1;
-			console.log('doNames');
 		}
 		else {
 			dict = this.wordDict;
 			index = this.wordIndex;
-			maxTrim = 7;//this.config.wmax;
+			maxTrim = 7; //this.config.wmax;
 		}
 
 		if (max != null) maxTrim = max;
@@ -709,7 +702,7 @@ if (0) {
 			for (i = 0; i < entry.data.length; ++i) {
 				e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
 				if (!e) continue;
-				
+
 				// the next two lines re-process the entries that contain separate search key and spelling due to mixed hiragana/katakana spelling
 				e3 = e[3].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
 				if (e3) e = e3;
