@@ -272,8 +272,11 @@
 		}
 
 		var range = document.caretRangeFromPoint(ev.clientX, ev.clientY);
+		if (range === null) {
+			return;
+		}
 		var rp = range.startContainer;
-		var ro = range.startOffset;
+		var ro = Math.min(range.startOffset, rp.length);
 
 		if (fake) {
 			// At the end of a line, don't do anything or you just get beginning of next line
