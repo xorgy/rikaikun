@@ -137,17 +137,21 @@ rcxDict.prototype = {
 			else if (f.length == 4) {
 				if (prevLen != f[0].length) {
 					prevLen = f[0].length;
-					g = [];
-					g.flen = prevLen;
+					g = {
+						flen: prevLen,
+						from: [],
+						to: [],
+						type: [],
+						reason: [],
+						length: 0
+					};
 					difRules.push(g);
 				}
-				o = {
-					from: f[0],
-					to: f[1],
-					type: f[2] >> 8,
-					reason: difReasons[f[3]]
-				};
-				g.push(o);
+				g.from.push(f[0]);
+				g.to.push(f[1]);
+				g.type.push(f[2] >> 8);
+				g.reason.push(difReasons[f[3]]);
+				g.length++;
 			}
 		}
 	},
@@ -174,27 +178,28 @@ rcxDict.prototype = {
 				var g = difRules[j];
 				if (g.flen <= wordLen) {
 					var end = word.substr(-g.flen);
+					var rtype = g.type;
+					var rfrom = g.from;
 					for (k = 0; k < g.length; ++k) {
-						var rule = g[k];
-						if ((type & rule.type) && (end == rule.from)) {
-							var newWord = word.substr(0, word.length - rule.from.length) + rule.to;
+						if ((type & rtype[k]) && (end == g.from[k])) {
+							var newWord = word.substr(0, word.length - rfrom[k].length) + g.to[k];
 							if (newWord.length <= 1) {
 								continue;
 							}
 							o = {};
 							if (have[newWord] != undefined) {
 								o = r[have[newWord]];
-								o.type |= rule.type;
+								o.type |= rtype[k];
 								continue;
 							}
 							have[newWord] = r.length;
 							if (r[i].reason.length) {
-								o.reason = rule.reason + ' &lt; ' + r[i].reason;
+								o.reason = g.reason[k] + ' &lt; ' + r[i].reason;
 							} else {
-								o.reason = rule.reason;
+								o.reason = g.reason[k];
 							}
 
-							o.type = rule.type;
+							o.type = rtype[k];
 							o.word = newWord;
 							r.push(o);
 						}
