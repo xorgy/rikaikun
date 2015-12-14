@@ -475,12 +475,16 @@ rcxDict.prototype = {
 		if (i < 0x3000) return null;
 
 		kde = this.find(this.kanjiData, kanji);
-		if (!kde) return null;
+		if (!kde) {
+			return null;
+		}
 
 		a = kde.split('|');
-		if (a.length != 6) return null;
+		if (a.length != 6) {
+			return null;
+		}
 
-		entry = { };
+		entry = {};
 		entry.kanji = a[0];
 
 		entry.misc = {};
@@ -527,236 +531,6 @@ rcxDict.prototype = {
 		'U',	'Unicode'
 	],
 
-
-	makeHtml: function(entry) {
-		var e;
-		var b;
-		var c, s, t;
-		var i, j, n;
-
-		if (entry == null) return '';
-
-		b = [];
-
-		if (entry.kanji) {
-			var yomi;
-			var box;
-			var bn;
-			var k;
-			var nums;
-
-			yomi = entry.onkun.replace(/\.([^\u3001]+)/g, '<span class="k-yomi-hi">$1</span>');
-			if (entry.nanori.length) {
-				yomi += '<br/><span class="k-yomi-ti">\u540D\u4E57\u308A</span> ' + entry.nanori;
-			}
-			if (entry.bushumei.length) {
-				yomi += '<br/><span class="k-yomi-ti">\u90E8\u9996\u540D</span> ' + entry.bushumei;
-			}
-
-			bn = entry.misc['B'] - 1;
-			k = entry.misc['G'];
-			switch (k) {
-			case 8:
-				k = 'general<br/>use';
-				break;
-			case 9:
-				k = 'name<br/>use';
-				break;
-			default:
-				k = isNaN(k) ? '-' : ('grade<br/>' + k);
-				break;
-			}
-			box = '<table class="k-abox-tb"><tr>' +
-				'<td class="k-abox-r">radical<br/>' + this.radData[bn].charAt(0) + ' ' + (bn + 1) + '</td>' +
-				'<td class="k-abox-g">' + k + '</td>' +
-				'</tr><tr>' +
-				'<td class="k-abox-f">freq<br/>' + (entry.misc['F'] ? entry.misc['F'] : '-') + '</td>' +
-				'<td class="k-abox-s">strokes<br/>' + entry.misc['S'] + '</td>' +
-				'</tr></table>';
-			if (rcxMain.config.kanjicomponents == 'true') {
-				k = this.radData[bn].split('\t');
-				box += '<table class="k-bbox-tb">' +
-					'<tr><td class="k-bbox-1a">' + k[0] + '</td>' +
-					'<td class="k-bbox-1b">' + k[2] + '</td>' +
-					'<td class="k-bbox-1b">' + k[3] + '</td></tr>';
-				j = 1;
-				for (i = 0; i < this.radData.length; ++i) {
-					s = this.radData[i];
-					if ((bn != i) && (s.indexOf(entry.kanji) != -1)) {
-						k = s.split('\t');
-						c = ' class="k-bbox-' + (j ^= 1);
-						box += '<tr><td' + c + 'a">' + k[0] + '</td>' +
-							'<td' + c + 'b">' + k[2] + '</td>' +
-							'<td' + c + 'b">' + k[3] + '</td></tr>';
-					}
-				}
-				box += '</table>';
-			}
-
-			nums = '';
-			j = 0;
-
-			var kanjiinfo = rcxMain.config.kanjiinfo;
-			for (i = 0; i*2 < this.numList.length; i++) {
-				c = this.numList[i*2];
-				if (kanjiinfo[i] == 'true') {
-					s = entry.misc[c];
-					c = ' class="k-mix-td' + (j ^= 1) + '"';
-					nums += '<tr><td' + c + '>' + this.numList[i*2 + 1] + '</td><td' + c + '>' + (s ? s : '-') + '</td></tr>';
-				}
-			}
-			if (nums.length) nums = '<table class="k-mix-tb">' + nums + '</table>';
-
-			b.push('<table class="k-main-tb"><tr><td valign="top">');
-			b.push(box);
-			b.push('<span class="k-kanji">' + entry.kanji + '</span><br/>');
-			b.push('<div class="k-eigo">' + entry.eigo + '</div>');
-			b.push('<div class="k-yomi">' + yomi + '</div>');
-			b.push('</td></tr><tr><td>' + nums + '</td></tr></table>');
-			return b.join('');
-		}
-
-		s = t = '';
-
-		if (entry.names) {
-			c = [];
-
-			b.push('<div class="w-title">Names Dictionary</div><table class="w-na-tb"><tr><td>');
-			for (i = 0; i < entry.data.length; ++i) {
-				e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
-				if (!e) continue;
-
-				// the next two lines re-process the entries that contain separate search key and spelling due to mixed hiragana/katakana spelling
-				var e3 = e[3].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
-				if (e3) e = e3;
-
-				if (s != e[3]) {
-					c.push(t);
-					t = '';
-				}
-
-				if (e[2]) c.push('<span class="w-kanji">' + e[1] + '</span> &#32; <span class="w-kana">' + e[2] + '</span><br/> ');
-					else c.push('<span class="w-kana">' + e[1] + '</span><br/> ');
-
-				s = e[3];
-				console.log('e[1]: ' + e[1]);
-				console.log('e[2]: ' + e[2]);
-				console.log('e[3]: ' + e[3]);
-				t = '<span class="w-def">' + s.replace(/\//g, '; ') + '</span><br/>';
-			}
-			c.push(t);
-			if (c.length > 4) {
-				n = (c.length >> 1) + 1;
-				b.push(c.slice(0, n + 1).join(''));
-
-				t = c[n];
-				c = c.slice(n, c.length);
-				for (i = 0; i < c.length; ++i) {
-					if (c[i].indexOf('w-def') != -1) {
-						if (t != c[i]) b.push(c[i]);
-						if (i == 0) c.shift();
-						break;
-					}
-				}
-
-				b.push('</td><td>');
-				b.push(c.join(''));
-			}
-			else {
-				b.push(c.join(''));
-			}
-			if (entry.more) b.push('...<br/>');
-			b.push('</td></tr></table>');
-		}
-		else {
-			if (entry.title) {
-				b.push('<div class="w-title">' + entry.title + '</div>');
-			}
-
-			var pK = '';
-			var k;
-
-			for (i = 0; i < entry.data.length; ++i) {
-				e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
-				if (!e) continue;
-
-				/*
-					e[1] = kanji/kana
-					e[2] = kana
-					e[3] = definition
-				*/
-
-				if (s != e[3]) {
-					b.push(t);
-					pK = k = '';
-				}
-				else {
-					k = t.length ? '<br/>' : '';
-				}
-
-				if (e[2]) {
-					if (pK == e[1]) k = '\u3001 <span class="w-kana">' + e[2] + '</span>';
-						else k += '<span class="w-kanji">' + e[1] + '</span> &#32; <span class="w-kana">' + e[2] + '</span>';
-					pK = e[1];
-				}
-				else {
-					k += '<span class="w-kana">' + e[1] + '</span>';
-					pK = '';
-				}
-				b.push(k);
-
-				if (entry.data[i][1]) b.push(' <span class="w-conj">(' + entry.data[i][1] + ')</span>');
-
-				s = e[3];
-				t = s.replace(/\//g, '; ');
-				if (/* !this.config.wpos */false) t = t.replace(/^\([^)]+\)\s*/, '');
-				if (/* !this.config.wpop */false) t = t.replace('; (P)', '');
-				if (rcxMain.config.onlyreading == 'false') {
-					t = '<br/><span class="w-def">' + t + '</span><br/>';
-				}
-				else {
-					t = '<br/>';
-				}
-			}
-			b.push(t);
-			if (entry.more) b.push('...<br/>');
-		}
-
-		return b.join('');
-	},
-
-
-	makeHtmlForRuby: function(entry) {
-		var e;
-		var b;
-		var c, s, t;
-		var i, j, n;
-
-		if (entry == null) return '';
-
-		b = [];
-
-		s = t = '';
-
-		if (entry.title) {
-			b.push('<div class="w-title">' + entry.title + '</div>');
-		}
-
-		for (i = 0; i < entry.data.length; ++i) {
-			e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
-			if (!e) continue;
-
-			s = e[3];
-			t = s.replace(/\//g, '; ');
-			if (/* !this.config.wpos */false) t = t.replace(/^\([^)]+\)\s*/, '');
-			if (/* !this.config.wpop */false) t = t.replace('; (P)', '');
-			t = '<span class="w-def">' + t + '</span><br/>\n';
-		}
-		b.push(t);
-
-		return b.join('');
-	},
-
 	makeText: function(entry, max) {
 		var e;
 		var b;
@@ -765,25 +539,25 @@ rcxDict.prototype = {
 
 		if (entry == null) return '';
 
-		b = [];
+		b = '';
 
 		if (entry.kanji) {
-			b.push(entry.kanji + '\n');
-			b.push((entry.eigo.length ? entry.eigo : '-') + '\n');
+			b += entry.kanji + '\n';
+			b += (entry.eigo || '-') + '\n';
 
-			b.push(entry.onkun.replace(/\.([^\u3001]+)/g, '\uFF08$1\uFF09') + '\n');
+			b += entry.onkun.replace(/\.([^\u3001]+)/g, '\uFF08$1\uFF09') + '\n';
 			if (entry.nanori.length) {
-				b.push('\u540D\u4E57\u308A\t' + entry.nanori + '\n');
+				b += `\u540D\u4E57\u308A\t${entry.nanori}\n`;
 			}
 			if (entry.bushumei.length) {
-				b.push('\u90E8\u9996\u540D\t' + entry.bushumei + '\n');
+				b += `\u90E8\u9996\u540D\t${entry.bushumei}\n`;
 			}
 
 			for (i = 0; i < this.numList.length; i += 2) {
 				e = this.numList[i];
 				if (/* this.config.kdisp[e] */1 == 1) {
 					j = entry.misc[e];
-					b.push(this.numList[i + 1].replace('&amp;', '&') + '\t' + (j ? j : '-') + '\n');
+					b += this.numList[i + 1].replace('&amp;', '&') + `\t${j || '-'}\n`;
 				}
 			}
 		}
@@ -794,18 +568,18 @@ rcxDict.prototype = {
 				if (!e) continue;
 
 				if (e[2]) {
-					b.push(e[1] + '\t' + e[2]);
+					b += `${e[1]}\t${e[2]}`;
 				}
 				else {
-					b.push(e[1]);
+					b += e[1];
 				}
 
 				t = e[3].replace(/\//g, '; ');
 				if (false/* !this.config.wpos */) t = t.replace(/^\([^)]+\)\s*/, '');
 				if (false/* !this.config.wpop */) t = t.replace('; (P)', '');
-				b.push('\t' + t + '\n');
+				b += `\t${t}\n`;
 			}
 		}
-		return b.join('');
+		return b;
 	}
 };

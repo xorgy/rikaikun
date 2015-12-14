@@ -180,9 +180,10 @@ var rcxMain = {
 	// already
 	onTabSelect: function(tabId) { rcxMain._onTabSelect(tabId); },
 	_onTabSelect: function(tabId) {
-
-		if ((this.enabled == 1))
-			chrome.tabs.sendMessage(tabId, {"type":"enable", "config": rcxMain.config});
+		this.loadDictionary();
+		if ((this.enabled == 1)) {
+			chrome.tabs.sendMessage(tabId, {"type":"enable", "config": rcxMain.config, "radData": this.dict.radData});
+		}
 	},
 
 	savePrep: function(clip, entry) {

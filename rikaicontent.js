@@ -63,6 +63,22 @@
 
 	var contentType = getContentType(window.document);
 
+	var radData;
+
+	var numList = [
+		'H',	'Halpern',
+		'L',	'Heisig',
+		'E',	'Henshall',
+		'DK',	'Kanji Learners Dictionary',
+		'N',	'Nelson',
+		'V',	'New Nelson',
+		'Y',	'PinYin',
+		'P',	'Skip Pattern',
+		'IN',	'Tuttle Kanji &amp; Kana',
+		'I',	'Tuttle Kanji Dictionary',
+		'U',	'Unicode'
+	];
+
 	function enableTab() {
 		if (!state) {
 			state = {};
@@ -163,7 +179,7 @@
 			state.prevSelView = doc.defaultView;
 		}
 
-		chrome.extension.sendMessage({'type':'makehtml', 'entry':e}, processHtml);
+		processHtml(makeHtml(e));
 	}
 
 	function highlightMatch(doc, rp, ro, matchLen, selEndList, state) {
@@ -227,11 +243,13 @@
 
 	//Event Listeners
 	chrome.runtime.onMessage.addListener(
-		function (request, sender, sendResponse) {
+		function dispatchMessage(request, sender, sendResponse) {
 			switch(request.type) {
 			case 'enable':
 				enableTab();
+				console.log(request);
 				state.config = request.config;
+				radData = request.radData;
 				break;
 			case 'disable':
 				disableTab();
@@ -356,10 +374,7 @@
 			forceKanji = ev.shiftKey ? 1 : 0;
 			state.popX = ev.clientX;
 			state.popY = ev.clientY;
-			state.timer = setTimeout(
-				function () {
-					show(state, forceKanji || defaultDict);
-				}, 1 /* cfg.popdelay */);
+			show(state, forceKanji || defaultDict);
 			return;
 		}
 
@@ -474,7 +489,7 @@
 
 		lastFound = [e];
 
-		chrome.extension.sendMessage({'type':'makehtml', 'entry':e}, processHtml);
+		processHtml(makeHtml(e));
 	}
 
 	function processHtml(html) {
@@ -521,13 +536,6 @@
 						       hidePopup();
 						       ev.stopPropagation();
 					       }, true);
-
-			/* if (cfg.resizedoc) {
-			 if ((topdoc.body.clientHeight < 1024) && (topdoc.body.style.minHeight === '')) {
-			 topdoc.body.style.minHeight = '1024px';
-			 topdoc.body.style.overflow = 'auto';
-			 }
-			 } */
 		}
 
 		popup.style.width = 'auto';
@@ -576,54 +584,7 @@
 			} else if (altView === 2) {
 				x = (window.innerWidth - (pW + 20)) + window.scrollX;
 				y = (window.innerHeight - (pH + 20)) + window.scrollY;
-			} else if (elem instanceof window.HTMLOptionElement) {
-				// FIXME: This probably doesn't actually work
-				// these things are always on z-top, so go sideways
-
-				x = 0;
-				y = 0;
-
-				var p = elem;
-				while (p) {
-					x += p.offsetLeft;
-					y += p.offsetTop;
-					p = p.offsetParent;
-				}
-				if (elem.offsetTop > elem.parentNode.clientHeight) {
-					y -= elem.offsetTop;
-				}
-
-				if ((x + popup.offsetWidth) > window.innerWidth) {
-					// too much to the right, go left
-					x -= popup.offsetWidth + 5;
-					if (x < 0) {
-						x = 0;
-					}
-				} else {
-					// use SELECT's width
-					x += elem.parentNode.offsetWidth + 5;
-				}
-
-				/*
-				 // in some cases (ex: google.co.jp), ebo doesn't add the width of the scroller (?), so use SELECT's width
-				 const epbo = elem.ownerDocument.getBoxObjectFor(elem.parentNode);
-
-				 const ebo = elem.ownerDocument.getBoxObjectFor(elem);
-				 x = ebo.screenX - bbo.screenX;
-				 y = ebo.screenY - bbo.screenY;
-
-				 if (x > (window.innerWidth - (x + epbo.width))) {
-				 x = (x - popup.offsetWidth - 5);
-				 if (x < 0) x = 0;
-				 }
-				 else {
-				 x += epbo.width + 5;
-				 }
-				 */
 			} else {
-				//x -= bbo.screenX;
-				//y -= bbo.screenY;
-
 				// go left if necessary
 				if ((x + pW) > (window.innerWidth - 20)) {
 					x = (window.innerWidth - pW) - 20;
@@ -951,5 +912,214 @@
 	function isVisible() {
 		var popup = document.getElementById('rikaichan-window');
 		return popup && (popup.style.display !== 'none');
+	}
+
+	function makeHtml(entry) {
+		var e;
+		var b;
+		var c, s, t;
+		var i, j, n;
+
+		var k;
+
+		if (entry == null) return '';
+
+		b = '';
+
+		if (entry.kanji) {
+			var yomi;
+			var box;
+			var bn;
+			var nums;
+
+			yomi = entry.onkun.replace(/\.([^\u3001]+)/g, '<span class="k-yomi-hi">$1</span>');
+			if (entry.nanori.length) {
+				yomi += '<br/><span class="k-yomi-ti">\u540D\u4E57\u308A</span> ' + entry.nanori;
+			}
+			if (entry.bushumei.length) {
+				yomi += '<br/><span class="k-yomi-ti">\u90E8\u9996\u540D</span> ' + entry.bushumei;
+			}
+
+			bn = entry.misc.B - 1;
+			k = entry.misc.G;
+			switch (k) {
+			case 8:
+				k = 'general<br/>use';
+				break;
+			case 9:
+				k = 'name<br/>use';
+				break;
+			default:
+				k = isNaN(k) ? '-' : ('grade<br/>' + k);
+				break;
+			}
+			box = '<table class="k-abox-tb"><tr>' +
+				`<td class="k-abox-r">radical<br/>${radData[bn].charAt(0)} ${bn + 1}</td>` +
+				`<td class="k-abox-g">${k}</td>` +
+				'</tr><tr>' +
+				`<td class="k-abox-f">freq<br/>${entry.misc['F'] || '-'}</td>` +
+				`<td class="k-abox-s">strokes<br/>${entry.misc['S']}</td>` +
+				'</tr></table>';
+			if (state.config.kanjicomponents == 'true') {
+				k = radData[bn].split('\t');
+				box += '<table class="k-bbox-tb">' +
+					`<tr><td class="k-bbox-1a">${k[0]}</td>` +
+					`<td class="k-bbox-1b">${k[2]}</td>` +
+					`<td class="k-bbox-1b">${k[3]}</td></tr>`;
+				j = 1;
+				for (i = 0; i < radData.length; ++i) {
+					s = radData[i];
+					if ((bn != i) && (s.indexOf(entry.kanji) != -1)) {
+						k = s.split('\t');
+						c = ' class="k-bbox-' + (j ^= 1);
+						box += `<tr><td${c}a">${k[0]}</td>` +
+							`<td${c}b">${k[2]}</td>` +
+							`<td${c}b">${k[3]}</td></tr>`;
+					}
+				}
+				box += '</table>';
+			}
+
+			nums = '';
+			j = 0;
+
+			let kanjiinfo = state.config.kanjiinfo;
+			for (i = 0; i*2 < numList.length; i++) {
+				c = numList[i*2];
+				if (kanjiinfo[i] === 'true') {
+					s = entry.misc[c];
+					c = ` class="k-mix-td${j ^= 1}"`;
+					nums += `<tr><td${c}>${numList[i * 2 + 1]}</td><td${c}>${s ||'-'}</td></tr>`;
+				}
+			}
+			if (nums.length) nums = `<table class="k-mix-tb">${nums}</table>`;
+
+			b += '<table class="k-main-tb"><tr><td valign="top">';
+			b += box;
+			b += `<span class="k-kanji">${entry.kanji}</span><br/>`;
+			b += `<div class="k-eigo">${entry.eigo}</div>`;
+			b += `<div class="k-yomi">${yomi}</div>`;
+			b += `</td></tr><tr><td>${nums}</td></tr></table>`;
+			return b;
+		}
+
+		s = t = '';
+
+		if (entry.names) {
+			c = [];
+
+			b += '<div class="w-title">Names Dictionary</div><table class="w-na-tb"><tr><td>';
+			for (i = 0; i < entry.data.length; ++i) {
+				e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+				if (!e) {
+					continue;
+				}
+
+				// the next two lines re-process the entries that contain separate search key and spelling due to mixed hiragana/katakana spelling
+				var e3m = e[3].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+				if (e3m) {
+					e = e3m;
+				}
+
+				if (s != e[3]) {
+					c.push(t);
+					t = '';
+				}
+
+				if (e[2]) {
+					c.push(`<span class="w-kanji">${e[1]}</span> &#32; <span class="w-kana">${e[2]}</span><br/> `);
+				} else {
+					c.push(`<span class="w-kana">${e[1]}</span><br/> `);
+				}
+
+				s = e[3];
+				t = `<span class="w-def">${s.replace(/\//g, '; ')}</span><br/>`;
+			}
+			c.push(t);
+			if (c.length > 4) {
+				n = (c.length >> 1) + 1;
+				b += c.slice(0, n + 1).join('');
+
+				t = c[n];
+				c = c.slice(n, c.length);
+				for (i = 0; i < c.length; ++i) {
+					if (c[i].indexOf('w-def') != -1) {
+						if (t != c[i]) {
+							b += c[i];
+						}
+						if (i == 0) {
+							c.shift();
+						}
+						break;
+					}
+				}
+
+				b += '</td><td>';
+				b += c.join('');
+			}
+			else {
+				b += c.join('');
+			}
+			if (entry.more) {
+				b += '...<br/>';
+			}
+			b += '</td></tr></table>';
+		} else {
+			if (entry.title) {
+				b += `<div class="w-title">${entry.title}</div>`;
+			}
+
+			var pK = '';
+
+			for (i = 0; i < entry.data.length; ++i) {
+				e = entry.data[i][0].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+				if (!e) continue;
+
+				/*
+					e[1] = kanji/kana
+					e[2] = kana
+					e[3] = definition
+				*/
+
+				if (s != e[3]) {
+					b += t;
+					pK = k = '';
+				}
+				else {
+					k = t.length ? '<br/>' : '';
+				}
+
+				if (e[2]) {
+					if (pK == e[1]) {
+						k = `\u3001 <span class="w-kana">${e[2]}</span>`;
+					} else {
+						k += `<span class="w-kanji">${e[1]}</span> &#32; <span class="w-kana">${e[2]}</span>`;
+					}
+					pK = e[1];
+				}
+				else {
+					k += `<span class="w-kana">${e[1]}</span>`;
+					pK = '';
+				}
+				b += k;
+
+				if (entry.data[i][1]) b += ` <span class="w-conj">(${entry.data[i][1]})</span>`;
+
+				s = e[3];
+				t = s.replace(/\//g, '; ');
+				if (/* !this.config.wpos */false) t = t.replace(/^\([^)]+\)\s*/, '');
+				if (/* !this.config.wpop */false) t = t.replace('; (P)', '');
+				if (state.config.onlyreading == 'false') {
+					t = `<br/><span class="w-def">${t}</span><br/>`;
+				}
+				else {
+					t = '<br/>';
+				}
+			}
+			b += t;
+			if (entry.more) b += '...<br/>';
+		}
+
+		return b;
 	}
 })(window, chrome);
