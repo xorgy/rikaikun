@@ -45,6 +45,17 @@ function rcxDict(loadNames) {
 	this.loadDIF();
 }
 
+var difRules;
+
+function stringReverse(str) {
+	var result = '',
+	    length = str.length;
+	while (length--) {
+		result += str[length];
+	}
+	return result;
+}
+
 rcxDict.prototype = {
 	config: {},
 
@@ -65,7 +76,9 @@ rcxDict.prototype = {
 		var a = this.fileRead(name, charset).split('\n');
 		// Is this just in case there is blank shit in the file.  It was writtin by Jon though.
 		// I suppose this is more robust
-		while ((a.length > 0) && (a[a.length - 1].length == 0)) a.pop();
+		while ((a.length > 0) && (a[a.length - 1].length == 0)) {
+			a.pop();
+		}
 		return a;
 	},
 
@@ -82,9 +95,13 @@ rcxDict.prototype = {
 			i = data.lastIndexOf('\n', mi) + 1;
 
 			mis = data.substr(i, tlen);
-			if (text < mis) end = i - 1;
-				else if (text > mis) beg = data.indexOf('\n', mi + 1) + 1;
-					else return data.substring(i, data.indexOf('\n', mi + 1));
+			if (text < mis) {
+				end = i - 1;
+			} else if (text > mis) {
+				beg = data.indexOf('\n', mi + 1) + 1;
+			} else {
+				return data.substring(i, data.indexOf('\n', mi + 1));
+			}
 		}
 		return null;
 	},
@@ -107,96 +124,11 @@ rcxDict.prototype = {
 		this.wordIndex = this.fileRead(chrome.extension.getURL("data/dict.idx"));
 		this.kanjiData = this.fileRead(chrome.extension.getURL("data/kanji.dat"), 'UTF-8');
 		this.radData = this.fileReadArray(chrome.extension.getURL("data/radicals.dat"), 'UTF-8');
-
-		//	this.test_kanji();
 	},
-/*
-	test_kanji: function() {
-		var a = this.kanjiData.split('\n');
-
-		alert('begin test. a.length=' + a.length);
-		var start = (new Date()).getTime();
-		for (var i = 0; i < a.length; ++i) {
-			if (!this.kanjiSearch(a[i].charAt(0))) {
-				alert('error @' + i + ': ' + a[i]);
-				return;
-			}
-		}
-		alert('time = ' + ((new Date()).getTime() - start));
-	},
-*/
-
-/*
-	test_index: function() {
-		var ixF = this.fileRead('chrome://rikaichan/content/dict.idx', 'EUC-JP');
-		var ixA = ixF.split('\n');
-
-		while ((ixA.length > 0) && (ixA[ixA.length - 1].length == 0)) ixA.pop();
-
-//		alert('length=' + ixA.length + ' / ' + ixF.length);
-if (0) {
-		var timeA = (new Date()).getTime();
-		for (var i = ixA.length - 1; i >= 0; --i) {
-			if ((i & 0xFF) == 0) window.status = 'A: ' + i;
-			var s = ixA[i];
-			var r = this.binSearchX(ixA, s.substr(0, s.indexOf(',') + 1));
-			if ((r == -1) || (ixA[r] != s)) {
-				alert('A failed: ' + s);
-				return;
-			}
-		}
-}
-		timeA = ((new Date()).getTime() - timeA) / 1000;
-
-
-		var timeF = (new Date()).getTime();
-		for (var i = ixA.length - 1; i >= 0; --i) {
-			if ((i & 0xFF) == 0) window.status = 'F: ' + i;
-			var s = ixA[i];
-			var r = this.find(ixF, s.substr(0, s.indexOf(',') + 1));
-			if (r != s) {
-				alert('F failed: ' + s);
-				return;
-			}
-		}
-		timeF = ((new Date()).getTime() - timeF) / 1000;
-
-		var timeX = (new Date()).getTime();
-if (0) {
-		for (var i = ixA.length - 1; i >= 0; --i) {
-			if ((i & 0xFF) == 0) window.status = 'X: ' + i;
-			var s = ixA[i];
-
-			var w = s.substr(0, s.indexOf(',') + 1);
-			var j = 0;
-			r = '';
-			if (ixF.substr(0, w.length) == w) {
-				r = ixF.substr(0, ixF.indexOf('\n'));
-			}
-			else {
-				w = '\n' + w;
-				j = ixF.indexOf(w);
-				if (j != -1) r = ixF.substring(j + 1, ixF.indexOf('\n', j + 1));
-			}
-
-			if (r != s) {
-				alert('X failed:\n[' + s + ']\n[' + r + ']');
-				return;
-			}
-		}
-}
-		timeX = ((new Date()).getTime() - timeX) / 1000;
-
-		alert('A=' + timeA + ' / F=' + timeF + ' / X=' + timeX);
-	},
-
-*/
-	///
 
 	loadDIF: function() {
-		this.difReasons = [];
-		this.difRules = [];
-		this.difExact = [];
+		var difReasons = [];
+		difRules = [];
 
 		var buffer = this.fileReadArray(chrome.extension.getURL("data/deinflect.dat"), 'UTF-8');
 		var prevLen = -1;
@@ -207,20 +139,20 @@ if (0) {
 			var f = buffer[i].split('\t');
 
 			if (f.length == 1) {
-				this.difReasons.push(f[0]);
+				difReasons.push(f[0]);
 			}
 			else if (f.length == 4) {
-				o = {};
-				o.from = f[0];
-				o.to = f[1];
-				o.type = f[2];
-				o.reason = f[3];
-
+				o = {
+					from: f[0],
+					to: f[1],
+					type: f[2] >> 8,
+					reason: difReasons[f[3]]
+				};
 				if (prevLen != o.from.length) {
 					prevLen = o.from.length;
 					g = [];
 					g.flen = prevLen;
-					this.difRules.push(g);
+					difRules.push(g);
 				}
 				g.push(o);
 			}
@@ -228,45 +160,48 @@ if (0) {
 	},
 
 	deinflect: function(word) {
-		var r = [];
-		var have = [];
-		var o;
-
-		o = {};
-		o.word = word;
-		o.type = 0xFF;
-		o.reason = '';
-		r.push(o);
+		var o = {
+			word: word,
+			type: 0xFF,
+			reason: ''
+		};
+		var r = [o];
+		var have = {};
 		have[word] = 0;
 
 		var i, j, k;
-
 		i = 0;
+
 		do {
 			word = r[i].word;
 			var wordLen = word.length;
 			var type = r[i].type;
 
-			for (j = 0; j < this.difRules.length; ++j) {
-				var g = this.difRules[j];
+			for (j = 0; j < difRules.length; ++j) {
+				var g = difRules[j];
 				if (g.flen <= wordLen) {
 					var end = word.substr(-g.flen);
 					for (k = 0; k < g.length; ++k) {
 						var rule = g[k];
 						if ((type & rule.type) && (end == rule.from)) {
 							var newWord = word.substr(0, word.length - rule.from.length) + rule.to;
-							if (newWord.length <= 1) continue;
+							if (newWord.length <= 1) {
+								continue;
+							}
 							o = {};
 							if (have[newWord] != undefined) {
 								o = r[have[newWord]];
-								o.type |= (rule.type >> 8);
-
+								o.type |= rule.type;
 								continue;
 							}
 							have[newWord] = r.length;
-							if (r[i].reason.length) o.reason = this.difReasons[rule.reason] + ' &lt; ' + r[i].reason;
-								else o.reason = this.difReasons[rule.reason];
-							o.type = rule.type >> 8;
+							if (r[i].reason.length) {
+								o.reason = rule.reason + ' &lt; ' + r[i].reason;
+							} else {
+								o.reason = rule.reason;
+							}
+
+							o.type = rule.type;
 							o.word = newWord;
 							r.push(o);
 						}
@@ -285,9 +220,9 @@ if (0) {
 	ch:[0x3092,0x3041,0x3043,0x3045,0x3047,0x3049,0x3083,0x3085,0x3087,0x3063,0x30FC,0x3042,0x3044,0x3046,
 		0x3048,0x304A,0x304B,0x304D,0x304F,0x3051,0x3053,0x3055,0x3057,0x3059,0x305B,0x305D,0x305F,0x3061,
 		0x3064,0x3066,0x3068,0x306A,0x306B,0x306C,0x306D,0x306E,0x306F,0x3072,0x3075,0x3078,0x307B,0x307E,
-		0x307F,0x3080,0x3081,0x3082,0x3084,0x3086,0x3088,0x3089,0x308A,0x308B,0x308C,0x308D,0x308F,0x3093],
+	    0x307F,0x3080,0x3081,0x3082,0x3084,0x3086,0x3088,0x3089,0x308A,0x308B,0x308C,0x308D,0x308F,0x3093],
 	cv:[0x30F4,0xFF74,0xFF75,0x304C,0x304E,0x3050,0x3052,0x3054,0x3056,0x3058,0x305A,0x305C,0x305E,0x3060,
-		0x3062,0x3065,0x3067,0x3069,0xFF85,0xFF86,0xFF87,0xFF88,0xFF89,0x3070,0x3073,0x3076,0x3079,0x307C],
+	    0x3062,0x3065,0x3067,0x3069,0xFF85,0xFF86,0xFF87,0xFF88,0xFF89,0x3070,0x3073,0x3076,0x3079,0x307C],
 	cs:[0x3071,0x3074,0x3077,0x307A,0x307D],
 
 	wordSearch: function(word, doNames, max) {
@@ -365,15 +300,15 @@ if (0) {
 
 		entry.data = [];
 
-        while (word.length > 0) {
+		while (word.length > 0) {
 			var showInf = (count != 0);
 			var trys;
 
-			if (doNames) trys = [{'word': word, 'type': 0xFF, 'reason': null}];
-				else trys = this.deinflect(word);
 
-            for (i = 0; i < trys.length; i++) {
-                u = trys[i];
+			trys = doNames ? [{'word': word, 'type': 0xFF, 'reason': null}] : this.deinflect(word);
+
+			for (i = 0; i < trys.length; i++) {
+				u = trys[i];
 
 				var ix = cache[u.word];
 				if (!ix) {
@@ -386,8 +321,8 @@ if (0) {
 					cache[u.word] = ix;
 				}
 
-                for (var j = 1; j < ix.length; ++j) {
-                    var ofs = ix[j];
+				for (var j = 1; j < ix.length; ++j) {
+					var ofs = ix[j];
 					if (have[ofs]) continue;
 
 					var dentry = dict.substring(ofs, dict.indexOf('\n', ofs));
@@ -404,7 +339,7 @@ if (0) {
 						// /(adj-i) shrill/
 
 						var w;
-						var x = dentry.split(/[,()]/);
+						var x = dentry.split(',');
 						var y = u.type;
 						var z = x.length - 1;
 						if (z > 10) z = 10;
@@ -418,38 +353,38 @@ if (0) {
 						}
 						ok = (z != -1);
 					}
-                    if (ok) {
-                        if (count >= maxTrim) {
+					if (ok) {
+						if (count >= maxTrim) {
 							entry.more = 1;
 							break;
 						}
 
 						have[ofs] = 1;
-                        ++count;
-                        if (maxLen == 0) maxLen = trueLen[word.length];
+						++count;
+						if (maxLen == 0) maxLen = trueLen[word.length];
 
 						if (trys[i].reason) {
 							if (showInf) r = '&lt; ' + trys[i].reason + ' &lt; ' + word;
-								else r = '&lt; ' + trys[i].reason;
+							else r = '&lt; ' + trys[i].reason;
 						}
 						else {
 							r = null;
 						}
 
 						entry.data.push([dentry, r]);
-                    }
-                }	// for j < ix.length
+					}
+				}	// for j < ix.length
 				if (count >= maxTrim) break;
-            }	// for i < trys.length
-            if (count >= maxTrim) break;
-            word = word.substr(0, word.length - 1);
-        }	// while word.length > 0
+			}	// for i < trys.length
+			if (count >= maxTrim) break;
+			word = word.substr(0, word.length - 1);
+		}	// while word.length > 0
 
 		if (entry.data.length == 0) return null;
 
 		entry.matchLen = maxLen;
-        return entry;
-    },
+		return entry;
+	},
 
 	translate: function(text) {
 		var e, o;
@@ -653,9 +588,9 @@ if (0) {
 			if (rcxMain.config.kanjicomponents == 'true') {
 				k = this.radData[bn].split('\t');
 				box += '<table class="k-bbox-tb">' +
-						'<tr><td class="k-bbox-1a">' + k[0] + '</td>' +
-						'<td class="k-bbox-1b">' + k[2] + '</td>' +
-						'<td class="k-bbox-1b">' + k[3] + '</td></tr>';
+					'<tr><td class="k-bbox-1a">' + k[0] + '</td>' +
+					'<td class="k-bbox-1b">' + k[2] + '</td>' +
+					'<td class="k-bbox-1b">' + k[3] + '</td></tr>';
 				j = 1;
 				for (i = 0; i < this.radData.length; ++i) {
 					s = this.radData[i];
@@ -663,8 +598,8 @@ if (0) {
 						k = s.split('\t');
 						c = ' class="k-bbox-' + (j ^= 1);
 						box += '<tr><td' + c + 'a">' + k[0] + '</td>' +
-								'<td' + c + 'b">' + k[2] + '</td>' +
-								'<td' + c + 'b">' + k[3] + '</td></tr>';
+							'<td' + c + 'b">' + k[2] + '</td>' +
+							'<td' + c + 'b">' + k[3] + '</td></tr>';
 					}
 				}
 				box += '</table>';
@@ -673,7 +608,7 @@ if (0) {
 			nums = '';
 			j = 0;
 
-			kanjiinfo = rcxMain.config.kanjiinfo;
+			var kanjiinfo = rcxMain.config.kanjiinfo;
 			for (i = 0; i*2 < this.numList.length; i++) {
 				c = this.numList[i*2];
 				if (kanjiinfo[i] == 'true') {
@@ -704,7 +639,7 @@ if (0) {
 				if (!e) continue;
 
 				// the next two lines re-process the entries that contain separate search key and spelling due to mixed hiragana/katakana spelling
-				e3 = e[3].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
+				var e3 = e[3].match(/^(.+?)\s+(?:\[(.*?)\])?\s*\/(.+)\//);
 				if (e3) e = e3;
 
 				if (s != e[3]) {

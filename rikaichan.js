@@ -3,7 +3,7 @@
 	Rikaikun
 	Copyright (C) 2010 Erek Speed
 	http://code.google.com/p/rikaikun/
-	
+
 	---
 
 	Originally based on Rikaichan 1.07
@@ -174,46 +174,6 @@ var rcxMain = {
 		}
 		return true;
 	},
-/*
-	showDownload: function() {
-		const url = 'http://rikaichan.mozdev.org/welcome.html';
-
-		try {
-			var u = '';
-
-			if (this.version != null) {
-				u += 'rv=' + this.version + '&';
-			}
-			if ((typeof(rcxWordDict) != 'undefined') && (rcxWordDict.version != null)) {
-				u += 'wv=' + rcxWordDict.version + '&';
-			}
-			if ((typeof(rcxNamesDict) != 'undefined') && (rcxNamesDict.version != null)) {
-				u += 'nv=' + rcxNamesDict.version + '&';
-			}
-			if (u.length) u = url + '?' + u;
-				else u = url;
-
-			if (this.isTB) {
-				Components.classes['@mozilla.org/messenger;1'].createInstance()
-					.QueryInterface(Components.interfaces.nsIMessenger)
-					.launchExternalURL(u);
-			}
-			else {
-				var w = window.open(u, 'rcxdict');
-				if (w) w.focus();
-			}
-		}
-		catch (ex) {
-			if (typeof(rcxWordDict) == 'undefined') {
-				alert('[rikaichan] Please install a dictionary file from ' + url);
-			}
-			else {
-				alert('[rikaichan] There was an error while opening ' + url);
-			}
-		}
-	},
-
-*/
 
 	// The callback for onSelectionChanged
 	// Just sends a message to the tab to enable itself if it hasn't
@@ -222,7 +182,7 @@ var rcxMain = {
 	_onTabSelect: function(tabId) {
 
 		if ((this.enabled == 1))
-			chrome.tabs.sendMessage(tabId, {"type":"enable", "config":rcxMain.config});
+			chrome.tabs.sendMessage(tabId, {"type":"enable", "config": rcxMain.config});
 	},
 
 	savePrep: function(clip, entry) {
@@ -252,9 +212,10 @@ var rcxMain = {
 			if (e.kanji) {
 				//if (mk-- <= 0) continue
 				text += this.dict.makeText(e, 1);
-			}
-			else {
-				if (me <= 0) continue;
+			} else {
+				if (me <= 0) {
+					continue;
+				}
 				text += this.dict.makeText(e, me);
 				me -= e.data.length;
 			}
@@ -299,7 +260,7 @@ var rcxMain = {
 		'<tr><td>M</td><td>Next character</td></tr>' +
 		'<tr><td>N</td><td>Next word</td></tr>' +
 		'</table>',
-		
+
 /* 			'<tr><td>C</td><td>Copy to clipboard</td></tr>' +
 		'<tr><td>S</td><td>Save to file</td></tr>' + */
 
@@ -311,32 +272,32 @@ var rcxMain = {
 			if (!this.loadDictionary()) return;
 			//	time = (((new Date()).getTime() - time) / 1000).toFixed(2);
 		}
-		
+
 		// Send message to current tab to add listeners and create stuff
 		chrome.tabs.sendMessage(tab.id, {"type":"enable", "config":rcxMain.config});
 		this.enabled = 1;
-		
+
 		if (mode == 1) {
 			if (rcxMain.config.minihelp == 'true')
 				chrome.tabs.sendMessage(tab.id, {"type":"showPopup", "text":rcxMain.miniHelp});
 			else
 				chrome.tabs.sendMessage(tab.id, {"type":"showPopup", "text":'Rikaikun enabled!'});
-		} 
+		}
 		chrome.browserAction.setBadgeBackgroundColor({"color":[255,0,0,255]});
 		chrome.browserAction.setBadgeText({"text":"On"});
 	},
 
-	// This function diables 
+	// This function diables
 	inlineDisable: function(tab, mode) {
 		// Delete dictionary object after we implement it
 		delete this.dict;
-		
+
 		this.enabled = 0;
 		chrome.browserAction.setBadgeBackgroundColor({"color":[0,0,0,0]});
 		chrome.browserAction.setBadgeText({"text":""});
 
 		// Send a disable message to all browsers
-		var windows = chrome.windows.getAll({"populate":true}, 
+		var windows = chrome.windows.getAll({"populate":true},
 			function(windows) {
 				for (var i =0; i < windows.length; ++i) {
 					var tabs = windows[i].tabs;
@@ -351,7 +312,7 @@ var rcxMain = {
 		if (rcxMain.enabled) rcxMain.inlineDisable(tab, 1);
 			else rcxMain.inlineEnable(tab, 1);
 	},
-	
+
 	kanjiN: 1,
 	namesN: 2,
 
@@ -364,18 +325,16 @@ var rcxMain = {
 	resetDict: function() {
 		this.showMode = 0;
 	},
-	
+
 	sameDict: '0',
 	forceKanji: '1',
 	defaultDict: '2',
 	nextDict: '3',
 
 	search: function(text, dictOption) {
-
 		switch (dictOption) {
 		case this.forceKanji:
-			var e = this.dict.kanjiSearch(text.charAt(0));
-			return e;
+			return e = this.dict.kanjiSearch(text.charAt(0));
 			break;
 		case this.defaultDict:
 			this.showMode = 0;
@@ -384,7 +343,7 @@ var rcxMain = {
 			this.showMode = (this.showMode + 1) % this.dictCount;
 			break;
 		}
-		
+
 		var m = this.showMode;
 		var e = null;
 
@@ -403,12 +362,9 @@ var rcxMain = {
 			if (e) break;
 			this.showMode = (this.showMode + 1) % this.dictCount;
 		} while (this.showMode != m);
-		
+
 		return e;
 	}
-	
-	
-
 };
 
 

@@ -1,48 +1,37 @@
+'use strict';
 
 chrome.browserAction.onClicked.addListener(rcxMain.inlineToggle);
 chrome.tabs.onSelectionChanged.addListener(rcxMain.onTabSelect);
 chrome.runtime.onMessage.addListener(
 	function(request, sender, response) {
-		var e;
 		switch(request.type) {
-			case 'enable?':
-				console.log('enable?');
-				rcxMain.onTabSelect(sender.tab.id);
-				break;
-			case 'xsearch':
-				e = rcxMain.search(request.text, request.dictOption);
-				response(e);
-				break;
-/*			case 'nextDict':
-				console.log('nextDict');
-				rcxMain.nextDict();
-				break;*/
-			case 'resetDict':
-				console.log('resetDict');
-				rcxMain.resetDict();
-				break;
-			case 'translate':
-				e = rcxMain.dict.translate(request.title);
-				response(e);
-				break;
-			case 'makehtml':
-				var html = rcxMain.dict.makeHtml(request.entry);
-				response(html);
-				break;
-			case 'switchOnlyReading':
-				console.log('switchOnlyReading');
-				if(rcxMain.config.onlyreading == 'true')
-					rcxMain.config.onlyreading = 'false';
-				else
-					rcxMain.config.onlyreading = 'true';
-				localStorage['onlyreading'] = rcxMain.config.onlyreading;
-				break;
-			case 'copyToClip':
-				console.log('copyToClip');
-				rcxMain.copyToClip(sender.tab, request.entry);
-				break;
-			default:
-				console.log(request);
+		case 'enable?':
+			rcxMain.onTabSelect(sender.tab.id);
+			break;
+		case 'search':
+			response(rcxMain.search(request.text, request.dictOption));
+			break;
+		case 'nextDict':
+			rcxMain.nextDict();
+			break;
+		case 'resetDict':
+			rcxMain.resetDict();
+			break;
+		case 'translate':
+			response(rcxMain.dict.translate(request.title));
+			break;
+		case 'makehtml':
+			response(rcxMain.dict.makeHtml(request.entry));
+			break;
+		case 'switchOnlyReading':
+			rcxMain.config.onlyreading = rcxMain.config.onlyreading === 'true';
+			localStorage['onlyreading'] = rcxMain.config.onlyreading;
+			break;
+		case 'copyToClip':
+			rcxMain.copyToClip(sender.tab, request.entry);
+			break;
+		default:
+			break;
 		}
 	});
 
@@ -82,7 +71,7 @@ if(initStorage("v0.8.10", true)) {
 	// V0.8.10
   	initStorage("title", "true");
 
-	for (i = 0; i*2 < rcxDict.prototype.numList.length; i++) {
+	for (let i = 0; i * 2 < rcxDict.prototype.numList.length; i++) {
 		initStorage(rcxDict.prototype.numList[i*2], "true");
 	}
 }
@@ -117,7 +106,8 @@ rcxMain.config.minihelp = localStorage["minihelp"];
 rcxMain.config.title = localStorage["title"];
 rcxMain.config.disablekeys = localStorage["disablekeys"];
 rcxMain.config.kanjicomponents = localStorage["kanjicomponents"];
-rcxMain.config.kanjiinfo = new Array(rcxDict.prototype.numList.length/2);
-for (i = 0; i*2 < rcxDict.prototype.numList.length; i++) {
-	rcxMain.config.kanjiinfo[i] = localStorage[rcxDict.prototype.numList[i*2]];
+rcxMain.config.kanjiinfo = new Array(rcxDict.prototype.numList.length / 2);
+
+for (let i = 0; i * 2 < rcxDict.prototype.numList.length; i++) {
+	rcxMain.config.kanjiinfo[i] = localStorage[rcxDict.prototype.numList[i * 2]];
 }

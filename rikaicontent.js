@@ -726,7 +726,7 @@
 
 		lastSelEnd = selEndList;
 		lastRo = ro;
-		chrome.extension.sendMessage({'type':'xsearch', 'text':text, 'dictOption': String(dictOption) },
+		chrome.extension.sendMessage({'type':'search', 'text':text, 'dictOption': String(dictOption) },
 					     processEntry);
 
 		return 1;
