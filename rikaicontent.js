@@ -61,6 +61,8 @@
 	// Hack because ro was coming out always 0 for some reason.
 	var lastRo = 0;
 
+	var contentType = getContentType(window.document);
+
 	function enableTab() {
 		if (!state) {
 			state = {};
@@ -169,39 +171,27 @@
 
 		// If selEndList is empty then we're dealing with a textarea/input situation
 		if (selEndList.length === 0) {
-			try {
-				if (rp.nodeName === 'TEXTAREA' ||
-				    rp.nodeName === 'INPUT') {
-					// If there is already a selected region not caused by
-					// rikaikun, leave it alone
-					if ((sel.toString()) && (state.selText !== sel.toString())) {
-						return;
-					}
-
-					// If there is no selected region and the saved
-					// textbox is the same as teh current one
-					// then save the current cursor position
-					// The second half of the condition let's us place the
-					// cursor in another text box without having it jump back
-					if (!sel.toString() && state.oldTA === rp) {
-						state.oldCaret = rp.selectionStart;
-						state.oldTA = rp;
-					}
-					rp.selectionStart = ro;
-					rp.selectionEnd = matchLen + ro;
-
-					state.selText = rp.value.substring(ro, matchLen+ro);
+			if (rp.nodeName === 'TEXTAREA' ||
+			    rp.nodeName === 'INPUT') {
+				// If there is already a selected region not caused by
+				// rikaikun, leave it alone
+				if ((sel.toString()) && (state.selText !== sel.toString())) {
+					return;
 				}
-			} catch (err) {
-				// If there is an error it is probably caused by the input type
-				// being not text.  This is the most general way to deal with
-				// arbitrary types.
 
-				// we set oldTA to null because we don't want to do weird stuf
-				// with buttons
-				state.oldTA = null;
-				//console.log('invalid input type for selection:' + rp.type);
-				console.log(err.message);
+				// If there is no selected region and the saved
+				// textbox is the same as teh current one
+				// then save the current cursor position
+				// The second half of the condition let's us place the
+				// cursor in another text box without having it jump back
+				if (!sel.toString() && state.oldTA === rp) {
+					state.oldCaret = rp.selectionStart;
+					state.oldTA = rp;
+				}
+				rp.selectionStart = ro;
+				rp.selectionEnd = matchLen + ro;
+
+				state.selText = rp.value.substring(ro, matchLen+ro);
 			}
 			return;
 		}
@@ -544,7 +534,7 @@
 		popup.style.height = 'auto';
 		popup.style.maxWidth = (looseWidth ? '' : '600px');
 
-		if (getContentType(topdoc) === 'text/plain') {
+		if (contentType === 'text/plain') {
 			var df = document.createDocumentFragment();
 			df.appendChild(document.createElementNS('http://www.w3.org/1999/xhtml', 'span'));
 			df.firstChild.innerHTML = text;
