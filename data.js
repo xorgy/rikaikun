@@ -1,4 +1,6 @@
-﻿/*
+﻿'use strict';
+
+/*
 
 	Rikaikun
 	Copyright (C) 2010 Erek Speed
@@ -46,15 +48,6 @@ function rcxDict(loadNames) {
 }
 
 var difRules;
-
-function stringReverse(str) {
-	var result = '',
-	    length = str.length;
-	while (length--) {
-		result += str[length];
-	}
-	return result;
-}
 
 rcxDict.prototype = {
 	config: {},
@@ -130,30 +123,30 @@ rcxDict.prototype = {
 		var difReasons = [];
 		difRules = [];
 
-		var buffer = this.fileReadArray(chrome.extension.getURL("data/deinflect.dat"), 'UTF-8');
+		var lines = this.fileReadArray(chrome.extension.getURL("data/deinflect.dat"), 'UTF-8');
 		var prevLen = -1;
 		var g, o;
 
 		// i = 1: skip header
-		for (var i = 1; i < buffer.length; ++i) {
-			var f = buffer[i].split('\t');
+		for (var i = 1; i < lines.length; ++i) {
+			var f = lines[i].split('\t');
 
 			if (f.length == 1) {
 				difReasons.push(f[0]);
 			}
 			else if (f.length == 4) {
+				if (prevLen != f[0].length) {
+					prevLen = f[0].length;
+					g = [];
+					g.flen = prevLen;
+					difRules.push(g);
+				}
 				o = {
 					from: f[0],
 					to: f[1],
 					type: f[2] >> 8,
 					reason: difReasons[f[3]]
 				};
-				if (prevLen != o.from.length) {
-					prevLen = o.from.length;
-					g = [];
-					g.flen = prevLen;
-					difRules.push(g);
-				}
 				g.push(o);
 			}
 		}
@@ -218,8 +211,8 @@ rcxDict.prototype = {
 
 	// katakana -> hiragana conversion tables
 	ch:[0x3092,0x3041,0x3043,0x3045,0x3047,0x3049,0x3083,0x3085,0x3087,0x3063,0x30FC,0x3042,0x3044,0x3046,
-		0x3048,0x304A,0x304B,0x304D,0x304F,0x3051,0x3053,0x3055,0x3057,0x3059,0x305B,0x305D,0x305F,0x3061,
-		0x3064,0x3066,0x3068,0x306A,0x306B,0x306C,0x306D,0x306E,0x306F,0x3072,0x3075,0x3078,0x307B,0x307E,
+	    0x3048,0x304A,0x304B,0x304D,0x304F,0x3051,0x3053,0x3055,0x3057,0x3059,0x305B,0x305D,0x305F,0x3061,
+	    0x3064,0x3066,0x3068,0x306A,0x306B,0x306C,0x306D,0x306E,0x306F,0x3072,0x3075,0x3078,0x307B,0x307E,
 	    0x307F,0x3080,0x3081,0x3082,0x3084,0x3086,0x3088,0x3089,0x308A,0x308B,0x308C,0x308D,0x308F,0x3093],
 	cv:[0x30F4,0xFF74,0xFF75,0x304C,0x304E,0x3050,0x3052,0x3054,0x3056,0x3058,0x305A,0x305C,0x305E,0x3060,
 	    0x3062,0x3065,0x3067,0x3069,0xFF85,0xFF86,0xFF87,0xFF88,0xFF89,0x3070,0x3073,0x3076,0x3079,0x307C],
@@ -278,7 +271,6 @@ rcxDict.prototype = {
 		var dict;
 		var index;
 		var maxTrim;
-		var cache = [];
 		var have = [];
 		var count = 0;
 		var maxLen = 0;
@@ -302,26 +294,18 @@ rcxDict.prototype = {
 
 		while (word.length > 0) {
 			var showInf = (count != 0);
-			var trys;
-
-
-			trys = doNames ? [{'word': word, 'type': 0xFF, 'reason': null}] : this.deinflect(word);
+			var trys = doNames ? [{'word': word, 'type': 0xFF, 'reason': null}] : this.deinflect(word);
 
 			for (i = 0; i < trys.length; i++) {
 				u = trys[i];
 
-				var ix = cache[u.word];
+				var ix = this.find(index, u.word + ',');
 				if (!ix) {
-					ix = this.find(index, u.word + ',');
-					if (!ix) {
-						cache[u.word] = [];
-						continue;
-					}
-					ix = ix.split(',');
-					cache[u.word] = ix;
+					continue;
 				}
+				ix = ix.split(',');
 
-				for (var j = 1; j < ix.length; ++j) {
+				for (let j = 1; j < ix.length; ++j) {
 					var ofs = ix[j];
 					if (have[ofs]) continue;
 
@@ -401,7 +385,6 @@ rcxDict.prototype = {
 					o.more = 1;
 					break;
 				}
-//				o.data = o.data.concat(e.data);
 				o.data.push(e.data[0]);
 				skip = e.matchLen;
 			}
